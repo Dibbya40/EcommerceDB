@@ -6,10 +6,7 @@ class EcommerceDBApp(wx.Frame):
         super(EcommerceDBApp, self).__init__(parent, title=title, size=(500, 300))
         
         # Set up database connection
-        #self.conn = sqlite3.connect('ecommerce.db')
-        #self.cursor = self.conn.cursor()
-        cnx = mysql.connector.connect(user='myuser', password='mypassword', host='localhost', database='ecommercedb')
-        self.cursor=cnx.cursor();
+        self.cnx = mysql.connector.connect(user='myuser', password='mypassword', host='localhost', database='ecommercedb')
 
         # Set up user interface
         self.panel = wx.Panel(self)
@@ -50,33 +47,44 @@ class EcommerceDBApp(wx.Frame):
       
 
     def view_administrators(self, event):
-        self.cursor.execute("SELECT * FROM Administrator")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM ADMINISTRATOR")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
     
     def view_customers(self, event):
-        self.cursor.execute("SELECT * FROM Customer")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM CUSTOMER")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
     
     def view_payments(self, event):
-        self.cursor.execute("SELECT * FROM Payment")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM PAYMENT")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
     
     def view_orders(self, event):
-        self.cursor.execute("SELECT * FROM Orders")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM ORDERS")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
     
     def view_products(self, event):
-        self.cursor.execute("SELECT * FROM Products")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM PRODUCTS")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
-    
     def view_categories(self, event):
-        self.cursor.execute("SELECT * FROM Category")
-        data = self.cursor.fetchall()
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT * FROM CATEGORY")
+        data = cursor.fetchall()
+        cursor.close()
         self.display_data(data)
     
     def display_data(self, data):
@@ -91,4 +99,3 @@ if __name__ == "__main__":
     app = wx.App()
     EcommerceDBApp(None, title="Ecommerce Database")
     app.MainLoop()
-

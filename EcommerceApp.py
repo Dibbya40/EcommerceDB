@@ -7,7 +7,7 @@ class EcommerceDBApp(wx.Frame):
         super(EcommerceDBApp, self).__init__(parent, title=title, size=(500, 500))
         
         # Set up database connection
-        self.cnx = mysql.connector.connect(user='myuser', password='mypassword', host='localhost', database='ecommercedb')
+        self.cnx = mysql.connector.connect(user='myuser', password='mypassword', host='localhost', database='ecommerce')
         self.cursor = self.cnx.cursor()
 
         # Set up user interface
@@ -28,13 +28,10 @@ class EcommerceDBApp(wx.Frame):
         
         # Create list of options
         self.options = [
-            {"label": "View Administrator Table", "handler": self.view_administrators},
-            {"label": "View Customer Table", "handler": self.view_customers},
-            {"label": "View Payment Table", "handler": self.view_payments},
-            {"label": "View Orders Table", "handler": self.view_orders},
-            {"label": "View Products Table", "handler": self.view_products},
-            {"label": "View Category Table", "handler": self.view_categories},
+            {"label": "Tables In This Database", "handler": self.view_table_names},
+            {"label": "View Any Table", "handler": self.on_view_table},
             {"label": "Retrieve Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
+            {"label": "Insert Into Any Table", "handler": self.insert},
             {"label": "Quit", "handler": self.on_quit}
         ]
         
@@ -47,44 +44,23 @@ class EcommerceDBApp(wx.Frame):
         
         #self.SetSizer(self.sizer)
         self.Show()
+    
+    def view_table_names(self, event):
+        self.cursor.execute("SHOW TABLES")
+        tables = self.cursor.fetchall()
+        table_names = [table[0] for table in tables]
+        table_names_str = "\n".join(table_names)
+        wx.MessageBox(table_names_str, "Table Names", wx.OK | wx.ICON_INFORMATION)
+
+    def on_view_table(self, event):
+        table_name = wx.GetTextFromUser("Enter table name:")
+        self.cursor.execute(f"SELECT * FROM {table_name}")
+        data = self.cursor.fetchall()
+        column_names = [i[0] for i in self.cursor.description]
+        self.display_data(data, column_names)    
       
-    def view_administrators(self, event):
-        self.cursor.execute("SELECT * FROM ADMINISTRATOR")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
-
-    def view_customers(self, event):
-        self.cursor.execute("SELECT * FROM CUSTOMER")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
-
-    def view_payments(self, event):
-        self.cursor.execute("SELECT * FROM PAYMENT")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
-    
-    def view_orders(self, event):
-        self.cursor.execute("SELECT * FROM ORDERS")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
-    
-    def view_products(self, event):
-        self.cursor.execute("SELECT * FROM PRODUCTS")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
-
-    def view_categories(self, event):
-        self.cursor.execute("SELECT * FROM CATEGORY")
-        data = self.cursor.fetchall()
-        column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)
     def retrieve_orders(self, event):
-        self.cursor.execute("SELECT o.O_ID, o.OrderDate, o.Price, c.Name AS Customer_Name, c.Address FROM ORDERS o INNER JOIN CUSTOMER c ON o.C_ID = c.C_ID;")
+        self.cursor.execute("SELECT o.Order_ID, o.OrderDate, o.Price, c.Name AS Customer_Name, c.Address FROM ORDERS o INNER JOIN CUSTOMER c ON o.Cust_ID = c.Cust_ID;")
         data = self.cursor.fetchall()
         column_names = [i[0] for i in self.cursor.description]
         self.display_data(data, column_names)
@@ -117,7 +93,35 @@ class EcommerceDBApp(wx.Frame):
 
         # Refresh sizer layout
         self.panel.Layout()
+        #table.HideRowLabels() //to hide row labels
+     
+     
+    def insert(self, event):
+        # Prompt user to enter table name
+        dlg = wx.TextEntryDialog(self.panel, "Enter table name:")
+        if dlg.ShowModal() == wx.ID_OK:
+            table_name = dlg.GetValue()
 
+        # Retrieve column names for specified table
+        self.cursor.execute(f"SELECT * FROM {table_name}")
+        columns = [column[0] for column in self.cursor.description]
+        self.cursor.fetchall()  # consume the result set
+        # Prompt user to enter values for each column
+        values = []
+        for column in columns:
+            dlg = wx.TextEntryDialog(self.panel, f"Enter {column}:")
+            if dlg.ShowModal() == wx.ID_OK:
+                value = dlg.GetValue()
+                values.append(value)
+
+        # Build and execute INSERT query
+        query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(['%s' for _ in columns])})"
+        self.cursor.execute(query, tuple(values))
+        self.cnx.commit()
+
+        wx.MessageBox("Data inserted successfully!", "Success", wx.OK | wx.ICON_INFORMATION)
+ 
+      
     def on_quit(self, event):
         self.Close()
     

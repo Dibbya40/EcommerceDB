@@ -32,6 +32,7 @@ class EcommerceDBApp(wx.Frame):
             {"label": "View Any Table", "handler": self.on_view_table},
             {"label": "Retrieve Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
             {"label": "Insert Into Any Table", "handler": self.insert},
+            {"label": "Update Any Table", "handler": self.update},
             {"label": "Quit", "handler": self.on_quit}
         ]
         
@@ -121,7 +122,50 @@ class EcommerceDBApp(wx.Frame):
 
         wx.MessageBox("Data inserted successfully!", "Success", wx.OK | wx.ICON_INFORMATION)
  
-      
+    
+    def update(self, event):
+        # Prompt user to enter table name
+        dlg1 = wx.TextEntryDialog(self.panel, "Enter table name:")
+        if dlg1.ShowModal() == wx.ID_OK:
+            table_name = dlg1.GetValue()
+            # Prompt user to enter column name and value for WHERE clause
+            dlg2 = wx.TextEntryDialog(self.panel, "Enter column name for WHERE clause:")
+            if dlg2.ShowModal() == wx.ID_OK:
+                where_column = dlg2.GetValue()
+            dlg2.Destroy()
+
+            dlg3 = wx.TextEntryDialog(self.panel, f"Enter value for {where_column} in WHERE clause:")
+            if dlg3.ShowModal() == wx.ID_OK:
+                where_value = dlg3.GetValue()
+            dlg3.Destroy()
+
+            # Retrieve column names for specified table
+            self.cursor.execute(f"SELECT * FROM {table_name}")
+            columns = [column[0] for column in self.cursor.description]
+            self.cursor.fetchall()
+
+            # Prompt user to enter new values for each column
+            values = []
+            for column in columns:
+                dlg4 = wx.TextEntryDialog(self.panel, f"Enter new value for {column}:")
+                if dlg4.ShowModal() == wx.ID_OK:
+                    value = dlg4.GetValue()
+                    values.append(value)
+                dlg4.Destroy()
+
+            # Build and execute UPDATE query
+            query = f"UPDATE {table_name} SET {', '.join([f'{column} = %s' for column in columns])} WHERE {where_column} = %s"
+            values.append(where_value)
+            print(query, tuple(values))
+            self.cursor.execute(query, tuple(values))
+            self.cnx.commit()
+
+            wx.MessageBox("Data updated successfully!", "Success", wx.OK | wx.ICON_INFORMATION)
+
+        dlg1.Destroy()
+ 
+
+
     def on_quit(self, event):
         self.Close()
     

@@ -30,9 +30,11 @@ class EcommerceDBApp(wx.Frame):
         self.options = [
             {"label": "Tables In This Database", "handler": self.view_table_names},
             {"label": "View Any Table", "handler": self.on_view_table},
-            {"label": "Retrieve Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
             {"label": "Insert Into Any Table", "handler": self.insert},
             {"label": "Update Any Table", "handler": self.update},
+            {"label": "Retrieve Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
+            {"label": "Retrieve Top 5 Best-selling Products", "handler": self.best_selling_products},
+            {"label": "Total Orders Per Customer", "handler": self.total_orders},
             {"label": "Quit", "handler": self.on_quit}
         ]
         
@@ -58,13 +60,25 @@ class EcommerceDBApp(wx.Frame):
         self.cursor.execute(f"SELECT * FROM {table_name}")
         data = self.cursor.fetchall()
         column_names = [i[0] for i in self.cursor.description]
-        self.display_data(data, column_names)    
+        self.display_data(data, column_names)
+
+    def best_selling_products(self,event):    
+        self.cursor.execute("SELECT p.Name AS Product_Name, COUNT(con.Product_ID) AS Total_Sales FROM CONTAINS con INNER JOIN PRODUCTS p ON con.Product_ID = p.Product_ID GROUP BY p.Name ORDER BY Total_Sales DESC LIMIT 5;")
+        data = self.cursor.fetchall()
+        column_names = [i[0] for i in self.cursor.description]
+        self.display_data(data, column_names)
       
     def retrieve_orders(self, event):
         self.cursor.execute("SELECT o.Order_ID, o.OrderDate, o.Price, c.Name AS Customer_Name, c.Address FROM ORDERS o INNER JOIN CUSTOMER c ON o.Cust_ID = c.Cust_ID;")
         data = self.cursor.fetchall()
         column_names = [i[0] for i in self.cursor.description]
         self.display_data(data, column_names)
+     
+    def total_orders(self, event):
+        self.cursor.execute("SELECT c.Name AS CUSTOMER_Name, COUNT(o.Order_ID) AS Total_ORDERS FROM CUSTOMER c INNER JOIN ORDERS o ON c.Cust_ID = o.Cust_ID GROUP BY c.Name;")
+        data = self.cursor.fetchall()
+        column_names = [i[0] for i in self.cursor.description]
+        self.display_data(data, column_names) 
 
     def display_data(self, data, column_names):
         # Clear sizer containing buttons and previous output

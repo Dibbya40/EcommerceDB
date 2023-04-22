@@ -32,9 +32,10 @@ class EcommerceDBApp(wx.Frame):
             {"label": "View Any Table", "handler": self.on_view_table},
             {"label": "Insert Into Any Table", "handler": self.insert},
             {"label": "Update Any Table", "handler": self.update},
-            {"label": "Retrieve Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
-            {"label": "Retrieve Top 5 Best-selling Products", "handler": self.best_selling_products},
+            {"label": "Orders With Corresponding Customer Information", "handler": self.retrieve_orders},
+            {"label": "Top 5 Best-selling Products", "handler": self.best_selling_products},
             {"label": "Total Orders Per Customer", "handler": self.total_orders},
+            {"label": "Categories With Their Corresponding Total Sales", "handler": self.categories},
             {"label": "Quit", "handler": self.on_quit}
         ]
         
@@ -67,6 +68,13 @@ class EcommerceDBApp(wx.Frame):
         data = self.cursor.fetchall()
         column_names = [i[0] for i in self.cursor.description]
         self.display_data(data, column_names)
+
+    def categories(self,event):
+        self.cursor.execute("CREATE VIEW CATSales AS SELECT c.Name AS CATEGORY_Name, SUM(o.Price) AS Total_Sales FROM CATEGORY c INNER JOIN PRODUCTS p ON c.CATEGORY_ID = p.CATEGORY_ID INNER JOIN CONTAINS con ON p.Product_ID = con.Product_ID INNER JOIN ORDERS o ON con.Order_ID = o.Order_ID GROUP BY c.Name;")
+        self.cursor.execute("SELECT * FROM CATSales;")
+        data = self.cursor.fetchall()
+        column_names = [i[0] for i in self.cursor.description]
+        self.display_data(data, column_names)    
       
     def retrieve_orders(self, event):
         self.cursor.execute("SELECT o.Order_ID, o.OrderDate, o.Price, c.Name AS Customer_Name, c.Address FROM ORDERS o INNER JOIN CUSTOMER c ON o.Cust_ID = c.Cust_ID;")
